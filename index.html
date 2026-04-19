@@ -205,65 +205,45 @@
             z-index: 5;
         }
 
-        /* CAMERA AREA STYLING */
         .camera-map-container {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            width: 320px;
+            width: 340px;
             background: rgba(0,0,0,0.85);
             border: 2px solid var(--ui-blue);
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            padding: 15px;
+            gap: 8px;
+            padding: 12px;
             z-index: 20;
-            border-radius: 4px;
         }
 
         .camera-grid {
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 8px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
         }
 
         .cam-btn {
-            background: #111; 
-            border: 1px solid var(--ui-blue); 
-            color: var(--ui-blue);
-            font-size: 12px; 
-            padding: 12px; 
-            cursor: pointer; 
-            text-align: center;
-            text-transform: uppercase;
+            background: #000; border: 1px solid var(--ui-blue); color: var(--ui-blue);
+            font-size: 11px; padding: 12px; cursor: pointer; text-align: center;
         }
 
-        .cam-btn.active { 
-            background: var(--ui-blue); 
-            color: black; 
-            font-weight: bold; 
-        }
+        .cam-btn.active { background: var(--ui-blue); color: black; font-weight: bold; }
 
-        /* THE CAMERA DOWN BUTTON */
         .monitor-down-btn {
             grid-column: span 2;
-            background: var(--warning-red);
-            border: none;
+            background: #222;
+            border: 2px solid #555;
             color: white;
-            padding: 18px;
+            padding: 15px;
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-top: 10px;
-            font-size: 16px;
-            box-shadow: 0 4px 0 #900;
+            margin-top: 5px;
         }
 
-        .monitor-down-btn:active { 
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #900;
-        }
+        .monitor-down-btn:active { background: #444; }
 
         #ui-layer {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
@@ -324,38 +304,93 @@
             display: none; animation: pulse 1s infinite;
         }
 
+        .jerry-timer-display { color: #ffaa00; }
+        .jerry-timer-display.danger { color: var(--warning-red); font-weight: bold; }
+
+        #goldie-office {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 180px;
+            z-index: 1000;
+            display: none;
+            filter: drop-shadow(0 0 30px var(--gold));
+            pointer-events: none;
+        }
+
+        #goldie-timer {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--gold);
+            font-size: 30px;
+            font-weight: bold;
+            z-index: 1001;
+            display: none;
+            text-shadow: 0 0 10px black;
+        }
+
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.3; }
             100% { opacity: 1; }
         }
+
+        /* START SCREEN STYLES */
+        .animatronic-lineup {
+            display: flex; gap: 40px; margin-bottom: 60px;
+            justify-content: center; align-items: flex-end; height: 180px;
+        }
+        
+        .anim-lineup-container { display: flex; flex-direction: column; align-items: center; position: relative; }
+
+        .anim-lineup-name {
+            font-size: 14px; color: var(--ui-blue); text-transform: uppercase;
+            writing-mode: vertical-rl; transform: rotate(180deg);
+            margin-bottom: 20px; letter-spacing: 3px; font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        .anim-lineup-icon { font-size: 60px; opacity: 0.9; filter: drop-shadow(0 0 15px rgba(255,255,255,0.3)); }
+
+        #saving-indicator { position: absolute; bottom: 20px; left: 20px; font-size: 12px; opacity: 0.5; z-index: 3000; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <!-- Menu and Screen Layers -->
     <div id="init-screen" class="screen">
         <h1 style="font-size: 60px; letter-spacing: 10px;">9 DaYs aT BoBs</h1>
         <h2 style="color: var(--ui-blue); opacity: 0.7; animation: pulse 2s infinite;">[ CLICK TO START ]</h2>
     </div>
 
     <div id="start-screen" class="screen" style="display: none;">
+        <div class="animatronic-lineup" id="lineup"></div>
         <h1 style="font-size: 56px; color: var(--ui-blue); margin: 0; letter-spacing: 4px;">9 DaYs aT BoBs</h1>
         <p id="night-display" style="font-size: 32px; margin: 20px 0; font-weight: bold;">NIGHT 1</p>
-        <button class="respawn-btn" id="continue-btn">BEGIN SHIFT</button>
+        <p id="night-description" style="font-size: 14px; margin-top: -10px; margin-bottom: 30px; opacity: 0.6; height: 20px;"></p>
+        
+        <button class="respawn-btn" id="continue-btn">CONTINUE NIGHT</button>
+        <button class="respawn-btn secondary" id="new-game-btn">NEW GAME</button>
     </div>
 
+    <!-- Gameplay UI -->
     <div id="ui-layer" style="display: none;">
         <div style="display: flex; gap: 30px; font-size: 16px; font-weight: bold; color: var(--ui-blue);">
+            <span class="jerry-timer-display" id="jerry-ui-container">JERRY: <span id="jerry-ui-val">20</span>s</span>
             <span>POWER: <span id="power-val">100</span>%</span>
             <span>TIME: <span id="clock-val">12</span> AM</span>
             <span id="ui-night-val">Night 1</span>
         </div>
+        <div id="warning-msg">JERRY IS COMING!</div>
     </div>
 
-    <!-- Main Office -->
     <div id="office" style="display: none;">
+        <div id="goldie-office">🟡</div>
+        <div id="goldie-timer">10.00</div>
+        
         <div class="hallway-section">
             <div id="left-window" class="window"></div>
             <div id="left-hall" class="hallway">
@@ -369,8 +404,9 @@
         </div>
         
         <div id="central-office" style="flex-grow: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <img src="uploaded:Screenshot 2026-04-10 10.04.59 PM.png" alt="Monitor Prop" class="office-monitor-prop">
-            <button class="btn" id="monitor-toggle-btn" style="width: 280px; height: 60px; border-color: var(--ui-blue); color: var(--ui-blue); font-size: 18px;">OPEN MONITOR</button>
+            <div style="font-size: 12px; color: rgba(255,255,255,0.2); margin-bottom: 10px;">FACILITY SECURITY BRANCH</div>
+            <img src="uploaded:Screenshot 2026-04-10 4.18.19 PM.png" alt="Monitor Prop" class="office-monitor-prop">
+            <button class="btn" id="monitor-toggle-btn" style="width: 280px; height: 60px; border-color: var(--ui-blue); color: var(--ui-blue); font-size: 18px;">MONITOR</button>
         </div>
 
         <div class="hallway-section">
@@ -386,17 +422,15 @@
         </div>
     </div>
 
-    <!-- Monitor Interface -->
     <div id="monitor-overlay">
         <div id="camera-view">
+            <img id="camera-image" src="uploaded:image_62587b.png" alt="Cam View" onerror="this.style.display='none'">
             <div id="static"></div>
             <div id="cam-label">CAM 01</div>
             <div id="animatronic-visual"></div>
-            
-            <!-- CAMERA MAP AND CONTROL AREA -->
             <div id="map-container" class="camera-map-container">
                 <div class="camera-grid" id="camera-buttons"></div>
-                <button class="monitor-down-btn" id="monitor-close-btn">CLOSE MONITOR</button>
+                <button class="monitor-down-btn" id="monitor-close-btn">MONITOR DOWN</button>
             </div>
         </div>
     </div>
@@ -404,198 +438,641 @@
     <div id="jumpscare" class="jumpscare">🤡</div>
 
     <div id="death-screen" class="screen" style="display: none;">
-        <h1 style="font-size: 64px; color: var(--warning-red);">GAME OVER</h1>
-        <button class="respawn-btn" id="retry-btn">RETRY NIGHT</button>
+        <h1 style="font-size: 64px; color: var(--warning-red); margin-bottom: 5px;">GAME OVER</h1>
+        <p id="death-night-label" style="opacity: 0.6; margin-bottom: 30px;">Night 1 Checkpoint Reached</p>
+        <button class="respawn-btn" id="retry-btn">CONTINUE NIGHT</button>
+        <button class="respawn-btn secondary" id="restart-btn">RESTART GAME</button>
     </div>
 
     <div id="win-screen" class="screen" style="display: none;">
         <h1 style="color: var(--ui-blue); font-size: 80px; margin: 0;">06:00</h1>
-        <p style="font-size: 24px;">SHIFT COMPLETE</p>
+        <p style="font-size: 24px; letter-spacing: 5px;">SHIFT COMPLETE</p>
         <button class="respawn-btn" id="win-btn">NEXT NIGHT</button>
     </div>
 
-    <audio id="menu-music" loop>
+    <div id="saving-indicator" style="display: none;">SAVING PROGRESS...</div>
+
+    <audio id="menu-music" preload="auto">
         <source src="uploaded:Screen recording 2026-04-10 3.26.10 PM.webm" type="video/webm">
     </audio>
 </div>
 
 <script type="module">
-    // Simplified Logic for Demo/Artifact purposes
-    const ROOM_NAMES = ["Stage", "Dining", "Back", "Hall L", "Hall R", "Kitchen", "Storage", "Boiler", "Secret"];
-    const ANIMS = ["🤡", "🤖", "👻", "🦾", "👁️", "🦍", "🦊"];
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    const ANIMS_DATA = [
+        { name: "Bob", icon: "🤡", pos: 0, path: [0, 1, 3, "OFFICE_L"] },
+        { name: "Silly", icon: "🤖", pos: 0, path: [0, 1, 4, "OFFICE_R"] },
+        { name: "Shadow", icon: "👻", pos: 2, path: [2, 6, 3, "OFFICE_L"] },
+        { name: "Copper", icon: "🦾", pos: 2, path: [2, 1, 4, "OFFICE_R"] },
+        { name: "Blinky", icon: "👁️", pos: 7, path: [7, 6, 1, 3, "OFFICE_L"] },
+        { name: "Crusher", icon: "🦍", pos: 5, path: [5, 1, 4, "OFFICE_R"] },
+        { name: "Jerry", icon: "🦊", pos: 8, path: [8, "OFFICE_R"], teleportOnly: true }
+    ];
+
+    const ROOM_NAMES = [
+        "Main Stage", "Dining Room", "Back Room", "Left Hallway", 
+        "Right Hallway", "Kitchen", "Storage Closet", "Boiler Room", "Jerry's House"
+    ];
+
+    const JERRY_MAX_TIME = 20;
 
     class Game {
         constructor() {
             this.currentNight = 1;
+            this.user = null;
             this.power = 100;
             this.time = 0;
-            this.isMonitorOpen = false;
             this.currentCam = 0;
+            this.isMonitorOpen = false;
             this.doors = { left: false, right: false };
             this.lights = { left: false, right: false };
-            this.animPositions = ANIMS.map(() => 0);
+            this.animatronics = [];
+            this.timers = { left: null, right: null }; 
+            this.jerryTimer = JERRY_MAX_TIME; 
             this.isGameOver = false;
+            this.isPowerOut = false;
+            this.hourDuration = 30000;
+            this.tickRate = 5000;
+            this.audioReady = false;
+            this.playPromise = null;
 
+            // Goldie Mechanic
+            this.camSpamCount = 0;
+            this.lastCamToggle = 0;
+            this.goldieTriggered = false;
+            this.goldieDeathTimer = 10;
+            
             this.init();
         }
 
-        init() {
-            this.setupListeners();
-            this.populateCams();
+        async init() {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    this.user = user;
+                    await this.loadProgress();
+                }
+            });
+
+            this.setupEventListeners();
+            this.populateLineup();
+            this.populateCameraButtons();
             this.reset();
         }
 
-        setupListeners() {
-            document.getElementById('init-screen').onclick = () => {
-                document.getElementById('init-screen').style.display = 'none';
-                document.getElementById('start-screen').style.display = 'flex';
-                document.getElementById('menu-music').play().catch(e => console.log("Audio blocked"));
-            };
+        setupEventListeners() {
+            document.getElementById('init-screen').addEventListener('click', () => {
+                this.audioReady = true;
+                this.initAudioAndMenu();
+            });
 
-            document.getElementById('continue-btn').onclick = () => this.start();
-            document.getElementById('monitor-toggle-btn').onclick = () => this.toggleMonitor();
-            document.getElementById('monitor-close-btn').onclick = () => this.toggleMonitor();
-            
+            document.getElementById('continue-btn').onclick = () => this.startGame();
+            document.getElementById('new-game-btn').onclick = () => this.newGameConfirm();
             document.getElementById('btn-door-l').onclick = () => this.toggleDoor('left');
             document.getElementById('btn-door-r').onclick = () => this.toggleDoor('right');
+            
             document.getElementById('btn-light-l').onmousedown = () => this.toggleLight('left', true);
             document.getElementById('btn-light-l').onmouseup = () => this.toggleLight('left', false);
             document.getElementById('btn-light-r').onmousedown = () => this.toggleLight('right', true);
             document.getElementById('btn-light-r').onmouseup = () => this.toggleLight('right', false);
-
-            document.getElementById('retry-btn').onclick = () => this.reset();
-            document.getElementById('win-btn').onclick = () => {
-                this.currentNight++;
-                this.reset();
-            };
+            
+            document.getElementById('monitor-toggle-btn').onclick = () => this.toggleMonitor();
+            document.getElementById('monitor-close-btn').onclick = () => this.toggleMonitor();
+            
+            document.getElementById('retry-btn').onclick = () => this.retry();
+            document.getElementById('restart-btn').onclick = () => this.restartTotal();
+            document.getElementById('win-btn').onclick = () => this.nextNight();
         }
 
-        populateCams() {
-            const grid = document.getElementById('camera-buttons');
+        populateLineup() {
+            const lineup = document.getElementById('lineup');
+            lineup.innerHTML = ANIMS_DATA.map(a => `
+                <div class="anim-lineup-container">
+                    <div class="anim-lineup-name">${a.name}</div>
+                    <div class="anim-lineup-icon">${a.icon}</div>
+                </div>
+            `).join('');
+        }
+
+        populateCameraButtons() {
+            const container = document.getElementById('camera-buttons');
             ROOM_NAMES.forEach((name, i) => {
                 const btn = document.createElement('button');
                 btn.className = `cam-btn ${i === 0 ? 'active' : ''}`;
-                btn.innerText = `CAM ${i + 1}`;
+                btn.innerText = `CAM ${i + 1}: ${name.split(' ')[0].toUpperCase()}`;
                 btn.onclick = () => this.switchCam(i);
-                grid.appendChild(btn);
+                container.appendChild(btn);
             });
+        }
+
+        async loadProgress() {
+            if (!this.user) return;
+            try {
+                const userDoc = await getDoc(doc(db, 'artifacts', appId, 'users', this.user.uid, 'saveData', 'progress'));
+                if (userDoc.exists()) {
+                    this.currentNight = userDoc.data().currentNight || 1;
+                }
+                this.updateStartScreen();
+                this.reset();
+            } catch (err) { console.error(err); }
+        }
+
+        async saveProgress() {
+            if (!this.user) return;
+            const indicator = document.getElementById('saving-indicator');
+            indicator.style.display = 'block';
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'users', this.user.uid, 'saveData', 'progress'), {
+                    currentNight: this.currentNight,
+                    lastSaved: Date.now()
+                });
+                setTimeout(() => indicator.style.display = 'none', 1000);
+            } catch (err) {
+                console.error(err);
+                indicator.style.display = 'none';
+            }
+        }
+
+        updateStartScreen() {
+            document.getElementById('night-display').innerText = `NIGHT ${this.currentNight}`;
+            const contBtn = document.getElementById('continue-btn');
+            contBtn.innerText = this.currentNight > 1 ? `CONTINUE NIGHT ${this.currentNight}` : "BEGIN SHIFT";
+            
+            const desc = document.getElementById('night-description');
+            if (this.currentNight === 10) {
+                desc.innerText = "SPECIAL CHALLENGE: THE LONG SHIFT";
+                desc.style.color = "var(--warning-red)";
+            } else {
+                desc.innerText = "";
+            }
         }
 
         reset() {
             this.power = 100;
             this.time = 0;
-            this.isGameOver = false;
+            this.currentCam = 0;
             this.isMonitorOpen = false;
+            this.isPowerOut = false;
             this.doors = { left: false, right: false };
-            this.animPositions = ANIMS.map(() => 0);
+            this.lights = { left: false, right: false };
+            this.animatronics = JSON.parse(JSON.stringify(ANIMS_DATA));
+            this.jerryTimer = JERRY_MAX_TIME; 
+            this.isGameOver = false;
+            this.tickRate = Math.max(1200, 5000 - (this.currentNight * 400));
+            this.hourDuration = (this.currentNight === 10) ? 80000 : 30000;
             
-            document.getElementById('death-screen').style.display = 'none';
-            document.getElementById('win-screen').style.display = 'none';
+            this.goldieTriggered = false;
+            this.goldieDeathTimer = 10;
+            this.camSpamCount = 0;
+
             document.getElementById('office').style.display = 'none';
+            document.getElementById('office').style.background = 'linear-gradient(to bottom, #111, #222, #111)';
+            document.getElementById('ui-layer').style.display = 'none';
+            
+            document.getElementById('left-door').classList.remove('closed');
+            document.getElementById('right-door').classList.remove('closed');
+            document.getElementById('goldie-office').style.display = 'none';
+            document.getElementById('goldie-timer').style.display = 'none';
+            
+            ['btn-door-l', 'btn-door-r'].forEach(id => {
+                const el = document.getElementById(id);
+                el.innerText = "CLOSE DOOR";
+                el.classList.remove('active', 'jammed');
+                el.style.opacity = "1";
+            });
+
+            document.getElementById('left-door-anim').innerText = "";
+            document.getElementById('right-door-anim').innerText = "";
+            document.getElementById('warning-msg').style.display = 'none';
             document.getElementById('monitor-overlay').style.display = 'none';
-            document.getElementById('start-screen').style.display = 'flex';
-            document.getElementById('night-display').innerText = `NIGHT ${this.currentNight}`;
-            document.getElementById('ui-night-val').innerText = `Night ${this.currentNight}`;
             
-            clearInterval(this.loop);
-            this.updateUI();
-        }
-
-        start() {
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('office').style.display = 'flex';
-            document.getElementById('ui-layer').style.display = 'block';
-            this.loop = setInterval(() => this.tick(), 1000);
-        }
-
-        tick() {
-            if (this.isGameOver) return;
-            
-            // Basic power drain
-            let drain = 0.1;
-            if (this.doors.left) drain += 0.3;
-            if (this.doors.right) drain += 0.3;
-            if (this.isMonitorOpen) drain += 0.2;
-            this.power -= drain;
-
-            if (this.power <= 0) this.jumpscare("🌑");
-
-            // Time progression
-            if (Math.random() < 0.05) {
-                this.time++;
-                if (this.time >= 6) this.win();
-            }
-
-            // Anim movement
-            this.animPositions = this.animPositions.map(pos => {
-                if (Math.random() < 0.1) return Math.floor(Math.random() * ROOM_NAMES.length);
-                return pos;
+            ['left-hall', 'right-hall'].forEach(id => document.getElementById(id).classList.remove('light-on', 'reveal-anim'));
+            ['left-window', 'right-window'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('light-on');
+                el.innerText = "";
             });
 
             this.updateUI();
+            this.updateStartScreen();
+        }
+
+        async safePlay(audio) {
+            if (!audio) return;
+            if (this.playPromise !== null) {
+                try { await this.playPromise; } catch (e) {}
+            }
+            try {
+                this.playPromise = audio.play();
+                await this.playPromise;
+            } catch (error) {
+                console.log("Audio play failed/interrupted:", error.message);
+            }
+        }
+
+        async safePause(audio) {
+            if (!audio) return;
+            if (this.playPromise !== null) {
+                try { await this.playPromise; } catch (e) {}
+            }
+            audio.pause();
+        }
+
+        async initAudioAndMenu() {
+            document.getElementById('init-screen').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+            
+            const music = document.getElementById('menu-music');
+            if (music && this.audioReady) {
+                music.volume = 1.0;
+                music.currentTime = 0;
+                music.loop = true;
+                await this.safePlay(music);
+            }
+        }
+
+        startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('office').style.display = 'flex';
+            document.getElementById('ui-layer').style.display = 'block';
+            
+            const music = document.getElementById('menu-music');
+            if (music && !music.paused) {
+                const fadeOut = async () => {
+                    let vol = music.volume;
+                    const fade = setInterval(async () => {
+                        vol -= 0.1;
+                        if (vol <= 0) {
+                            clearInterval(fade);
+                            await this.safePause(music);
+                            music.volume = 0;
+                        } else {
+                            music.volume = Math.max(0, vol);
+                        }
+                    }, 50);
+                };
+                fadeOut();
+            }
+
+            this.updateUI();
+            this.gameLoop = setInterval(() => this.tick(), this.tickRate);
+            this.powerLoop = setInterval(() => this.drainPower(), 1000); 
+            this.clockLoop = setInterval(() => this.advanceTime(), this.hourDuration); 
+            this.mechanicLoop = setInterval(() => this.checkMechanics(), 1000);
+            this.goldieLoop = setInterval(() => this.updateGoldie(), 50);
+        }
+
+        stopLoops() {
+            clearInterval(this.gameLoop);
+            clearInterval(this.powerLoop);
+            clearInterval(this.clockLoop);
+            clearInterval(this.mechanicLoop);
+            clearInterval(this.goldieLoop);
+            clearTimeout(this.timers.left);
+            clearTimeout(this.timers.right);
+        }
+
+        updateGoldie() {
+            if (!this.goldieTriggered || this.isGameOver) return;
+            
+            this.goldieDeathTimer -= 0.05;
+            const timerEl = document.getElementById('goldie-timer');
+            timerEl.innerText = Math.max(0, this.goldieDeathTimer).toFixed(2);
+            
+            if (this.goldieDeathTimer <= 0) {
+                this.jumpscare("🟡");
+            }
+        }
+
+        checkMechanics() {
+            if (this.isGameOver || this.isPowerOut) return;
+            if (this.isMonitorOpen && this.currentCam === 8) {
+                this.jerryTimer = JERRY_MAX_TIME; 
+                document.getElementById('warning-msg').style.display = 'none';
+            } else {
+                this.jerryTimer--;
+                if (this.jerryTimer <= 5) document.getElementById('warning-msg').style.display = 'block';
+                if (this.jerryTimer <= 0) {
+                    const jerry = this.animatronics.find(a => a.name === "Jerry");
+                    if (jerry && jerry.pos === 8) {
+                        jerry.pos = "OFFICE_R"; 
+                        this.startAttackTimer("OFFICE_R", "🦊");
+                        this.updateOfficeVisuals();
+                        this.jerryTimer = JERRY_MAX_TIME; 
+                    }
+                }
+            }
+            this.updateUI();
+        }
+
+        drainPower() {
+            if (this.isGameOver || this.isPowerOut) return;
+            let usage = 0.05; 
+            if (this.doors.left) usage += 0.3; 
+            if (this.doors.right) usage += 0.3;
+            if (this.lights.left || this.lights.right) usage += 0.15; 
+            if (this.isMonitorOpen) usage += 0.2; 
+            
+            this.power -= usage;
+            if (this.power <= 0) {
+                this.power = 0;
+                this.handlePowerOutage();
+            }
+            this.updateUI();
+        }
+
+        async handlePowerOutage() {
+            if (this.isPowerOut) return;
+            this.isPowerOut = true;
+            this.stopLoops();
+            
+            // Cut power visuals
+            document.getElementById('monitor-overlay').style.display = 'none';
+            document.getElementById('office').style.background = 'black';
+            document.getElementById('ui-layer').style.display = 'none';
+            
+            // Open doors
+            this.doors.left = false;
+            this.doors.right = false;
+            document.getElementById('left-door').classList.remove('closed');
+            document.getElementById('right-door').classList.remove('closed');
+            
+            // Turn off lights
+            this.toggleLight('left', false);
+            this.toggleLight('right', false);
+
+            // Disable buttons
+            document.querySelectorAll('.btn').forEach(btn => btn.style.opacity = "0.2");
+
+            const music = document.getElementById('menu-music');
+            if (music) {
+                music.currentTime = 0;
+                music.volume = 0.8;
+                music.loop = true;
+                await this.safePlay(music);
+            }
+
+            setTimeout(async () => {
+                if (music) {
+                    await this.safePause(music);
+                    music.currentTime = 5;
+                    music.volume = 1;
+                    await this.safePlay(music);
+                }
+                this.jumpscare("🌑");
+            }, 6000 + Math.random() * 4000);
+        }
+
+        advanceTime() {
+            if (this.isGameOver || this.isPowerOut) return;
+            this.time++;
+            if (this.time >= 6) this.win();
+            this.updateUI();
+        }
+
+        tick() {
+            if (this.isGameOver || this.isPowerOut) return;
+            this.animatronics.forEach(anim => {
+                if (anim.teleportOnly) return; 
+                const difficulty = Math.max(1, 10 - Math.floor(this.currentNight / 1.5));
+                if (Math.floor(Math.random() * difficulty) === 0) this.moveAnimatronic(anim);
+            });
+            this.updateOfficeVisuals();
+            if (this.isMonitorOpen) this.renderCam();
+        }
+
+        moveAnimatronic(anim) {
+            if (anim.pos === "OFFICE_L" || anim.pos === "OFFICE_R") return;
+            let currentPathIndex = anim.path.indexOf(anim.pos);
+            let nextStep = anim.path[currentPathIndex + 1];
+            if (nextStep === "OFFICE_L" || nextStep === "OFFICE_R") {
+                anim.pos = nextStep;
+                this.startAttackTimer(nextStep, anim.icon);
+            } else if (nextStep !== undefined) {
+                anim.pos = nextStep;
+            } else {
+                anim.pos = anim.path[0]; 
+            }
+        }
+
+        startAttackTimer(side, icon) {
+            const sideKey = side === "OFFICE_L" ? "left" : "right";
+            if (this.timers[sideKey]) clearTimeout(this.timers[sideKey]);
+
+            if (icon === "🦊" && side === "OFFICE_R") {
+                if (this.doors.right) {
+                    this.doors.right = false;
+                    document.getElementById('right-door').classList.remove('closed');
+                    document.getElementById(`btn-door-r`).classList.remove('active');
+                }
+                const doorBtn = document.getElementById('btn-door-r');
+                doorBtn.classList.add('jammed');
+                doorBtn.innerText = "JAMMED";
+            }
+
+            this.timers[sideKey] = setTimeout(() => {
+                if (!this.doors[sideKey] && !this.isGameOver && !this.isPowerOut) {
+                    this.jumpscare(icon);
+                } else if (!this.isPowerOut) {
+                    setTimeout(() => {
+                        const anim = this.animatronics.find(a => a.pos === side);
+                        if (anim) anim.pos = anim.path[0]; 
+                        if (icon === "🦊") {
+                            const doorBtn = document.getElementById('btn-door-r');
+                            doorBtn.classList.remove('jammed');
+                            doorBtn.innerText = "CLOSE DOOR";
+                        }
+                        this.updateOfficeVisuals();
+                    }, 5000);
+                }
+            }, 3500);
+        }
+
+        updateOfficeVisuals() {
+            if (this.isPowerOut) return;
+            const leftAnim = this.animatronics.find(a => a.pos === "OFFICE_L");
+            const rightAnim = this.animatronics.find(a => a.pos === "OFFICE_R");
+            
+            document.getElementById('left-door-anim').innerText = leftAnim ? leftAnim.icon : "";
+            document.getElementById('right-door-anim').innerText = rightAnim ? rightAnim.icon : "";
+            
+            document.getElementById('left-window').innerText = (leftAnim && this.lights.left) ? leftAnim.icon : "";
+            document.getElementById('right-window').innerText = (rightAnim && this.lights.right) ? rightAnim.icon : "";
         }
 
         toggleDoor(side) {
+            if (this.power <= 0 || this.isGameOver || this.isPowerOut) return;
+            const btnId = `btn-door-${side.charAt(0)}`;
+            if (document.getElementById(btnId).classList.contains('jammed')) return;
+
             this.doors[side] = !this.doors[side];
             document.getElementById(`${side}-door`).classList.toggle('closed', this.doors[side]);
-            document.getElementById(`btn-door-${side[0]}`).classList.toggle('active', this.doors[side]);
+            document.getElementById(btnId).innerText = this.doors[side] ? "OPEN DOOR" : "CLOSE DOOR";
+            document.getElementById(btnId).classList.toggle('active', this.doors[side]);
         }
 
-        toggleLight(side, on) {
-            document.getElementById(`${side}-hall`).classList.toggle('light-on', on);
+        toggleLight(side, state) {
+            if (this.power <= 0 || this.isGameOver || this.isPowerOut) return;
+            this.lights[side] = state;
+            document.getElementById(`${side}-hall`).classList.toggle('light-on', state);
+            document.getElementById(`${side}-window`).classList.toggle('light-on', state);
+            this.updateOfficeVisuals(); 
         }
 
         toggleMonitor() {
+            if (this.power <= 0 || this.isGameOver || this.isPowerOut) return;
+            
+            // Camera Flip Detection (Goldie)
+            const now = Date.now();
+            if (now - this.lastCamToggle < 300) {
+                this.camSpamCount++;
+            } else {
+                this.camSpamCount = 0;
+            }
+            this.lastCamToggle = now;
+
+            if (this.camSpamCount >= 8 && !this.goldieTriggered) {
+                this.triggerGoldie();
+            }
+
             this.isMonitorOpen = !this.isMonitorOpen;
             document.getElementById('monitor-overlay').style.display = this.isMonitorOpen ? 'flex' : 'none';
             if (this.isMonitorOpen) this.renderCam();
         }
 
-        switchCam(idx) {
-            this.currentCam = idx;
-            document.querySelectorAll('.cam-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+        triggerGoldie() {
+            this.goldieTriggered = true;
+            this.goldieDeathTimer = 10;
+            document.getElementById('goldie-office').style.display = 'block';
+            document.getElementById('goldie-timer').style.display = 'block';
+            
+            // Disable camera button to emphasize "no way to save you"
+            const mainToggle = document.getElementById('monitor-toggle-btn');
+            mainToggle.style.opacity = '0.5';
+            mainToggle.innerText = "SYSTEM FAILURE";
+            
+            const overlayDownBtn = document.getElementById('monitor-close-btn');
+            overlayDownBtn.innerText = "FATAL ERROR";
+            overlayDownBtn.style.color = "var(--gold)";
+            overlayDownBtn.disabled = true;
+        }
+
+        switchCam(index) {
+            this.currentCam = index;
+            document.querySelectorAll('.cam-btn').forEach((b, i) => b.classList.toggle('active', i === index));
             this.renderCam();
         }
 
         renderCam() {
-            document.getElementById('cam-label').innerText = `CAM 0${this.currentCam + 1}: ${ROOM_NAMES[this.currentCam]}`;
+            const label = document.getElementById('cam-label');
             const display = document.getElementById('animatronic-visual');
-            display.innerHTML = '';
-            this.animPositions.forEach((pos, i) => {
-                if (pos === this.currentCam) {
-                    const span = document.createElement('span');
-                    span.className = 'cam-anim-icon';
-                    span.innerText = ANIMS[i];
-                    display.appendChild(span);
-                }
-            });
+            const camImage = document.getElementById('camera-image');
+            label.innerText = `CAM 0${this.currentCam + 1}: ${ROOM_NAMES[this.currentCam]}`;
+            camImage.style.display = (this.currentCam === 0) ? 'block' : 'none';
+            const visibleAnims = this.animatronics.filter(a => a.pos === this.currentCam);
+            display.innerHTML = visibleAnims.map(a => `<div class="cam-anim-icon">${a.icon}</div>`).join('');
         }
 
         updateUI() {
-            document.getElementById('power-val').innerText = Math.floor(this.power);
+            document.getElementById('power-val').innerText = Math.max(0, Math.floor(this.power));
             document.getElementById('clock-val').innerText = this.time === 0 ? 12 : this.time;
+            document.getElementById('ui-night-val').innerText = `Night ${this.currentNight}`;
+            document.getElementById('jerry-ui-val').innerText = Math.max(0, this.jerryTimer);
+            document.getElementById('jerry-ui-container').classList.toggle('danger', this.jerryTimer <= 5);
         }
 
-        jumpscare(icon) {
+        async jumpscare(icon) {
+            if (this.isGameOver) return; 
             this.isGameOver = true;
-            clearInterval(this.loop);
+            this.stopLoops();
+            
+            document.getElementById('monitor-overlay').style.display = 'none';
             const js = document.getElementById('jumpscare');
             js.innerText = icon;
+            js.style.color = (icon === "🟡") ? "var(--gold)" : "white";
             js.style.display = 'flex';
+            
+            const audio = document.getElementById('menu-music');
+            if (audio) {
+                audio.volume = 1;
+                await this.safePlay(audio);
+            }
+
             setTimeout(() => {
                 js.style.display = 'none';
+                document.getElementById('death-night-label').innerText = (icon === "🟡") ? "CURSED BY GOLDIE" : `Night ${this.currentNight} Checkpoint Reached`;
                 document.getElementById('death-screen').style.display = 'flex';
-            }, 1000);
+                document.getElementById('office').style.display = 'none';
+                document.getElementById('ui-layer').style.display = 'none';
+            }, 1500);
         }
 
         win() {
+            if (this.goldieTriggered) return; // Can't win if Goldie is hunting you
             this.isGameOver = true;
-            clearInterval(this.loop);
+            this.stopLoops();
+            const winBtn = document.getElementById('win-btn');
+            if (this.currentNight >= 9) {
+                winBtn.innerText = "YOU BEAT THE GAME!";
+                winBtn.onclick = () => this.restartTotal();
+            } else {
+                winBtn.innerText = "NEXT NIGHT";
+                winBtn.onclick = () => this.nextNight();
+            }
             document.getElementById('win-screen').style.display = 'flex';
+            document.getElementById('office').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'none';
+        }
+
+        nextNight() {
+            this.currentNight++;
+            this.saveProgress();
+            document.getElementById('win-screen').style.display = 'none';
+            this.reset();
+            this.initAudioAndMenu();
+        }
+
+        retry() {
+            document.getElementById('death-screen').style.display = 'none';
+            this.reset();
+            this.initAudioAndMenu();
+        }
+
+        newGameConfirm() {
+            if (this.currentNight > 1) {
+                if (window.confirm("Start over from Night 1? This will delete your current progress.")) {
+                    this.restartTotal();
+                }
+            } else {
+                this.startGame();
+            }
+        }
+
+        restartTotal() {
+            this.currentNight = 1;
+            this.saveProgress();
+            this.reset();
+            document.getElementById('win-screen').style.display = 'none';
+            document.getElementById('death-screen').style.display = 'none';
+            this.initAudioAndMenu();
         }
     }
 
-    new Game();
+    const game = new Game();
 </script>
 </body>
 </html>
