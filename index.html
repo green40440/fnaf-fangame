@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9 DaYs aT BoBs</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --office-gray: #1a1a1a;
+            --ui-blue: #00f2ff;
+            --warning-red: #ff3333;
+            --gold: #ffd700;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Office Styling */
+        #office {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #111, #222, #111);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .hallway-section {
+            width: 30%;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .hallway {
+            width: 100%;
+            height: 70%;
+            background: #000;
+            border: 4px solid #333;
+            position: relative;
+            transition: background 0.1s;
+            overflow: hidden;
+        }
+
+        .hallway.light-on {
+            background: #444;
+            box-shadow: inset 0 0 50px #fff;
+        }
+
+        .window {
+            width: 80%;
+            height: 25%;
+            background: #050505;
+            border: 4px solid #444;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+            transition: background 0.1s;
+            z-index: 5;
+        }
+
+        .window.light-on {
+            background: #222;
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+
+        .door-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: #444;
+            transform: translateY(-100%);
+            transition: transform 0.2s ease-in;
+            z-index: 20;
+            border-bottom: 10px solid #111;
+        }
+
+        .door-container.closed {
+            transform: translateY(0);
+        }
+
+        .animatronic-at-door {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 180px;
+            z-index: 10;
+            pointer-events: none;
+            filter: drop-shadow(0 0 20px black);
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+
+        .hallway.light-on .animatronic-at-door,
+        .hallway.reveal-anim .animatronic-at-door {
+            opacity: 1;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 150px;
+        }
+
+        .btn {
+            padding: 15px;
+            background: #333;
+            border: 2px solid #555;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .btn:active { background: #555; }
+        .btn.active { background: var(--ui-blue); color: black; }
+        
+        .btn.jammed {
+            background: #1a0000;
+            border-color: var(--warning-red);
+            color: var(--warning-red);
+            cursor: not-allowed;
+            animation: jam-shake 0.2s infinite;
+        }
+
+        @keyframes jam-shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(2px); }
+            75% { transform: translateX(-2px); }
+            100% { transform: translateX(0); }
+        }
+
+        #monitor-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            z-index: 100;
+            flex-direction: column;
+        }
+
+        #camera-view {
+            flex-grow: 1;
+            border: 10px solid #222;
+            margin: 20px;
+            position: relative;
+            background: #050505;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #camera-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.4;
+            position: absolute;
+            z-index: 1;
+        }
+
+        #static {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.2;
+            background: url('https://media.giphy.com/media/oEI9uWUqWMrS/giphy.gif');
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* CAMERA AREA STYLING */
+        .camera-map-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid var(--ui-blue);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            z-index: 20;
+            border-radius: 4px;
+        }
+
+        .camera-grid {
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 8px;
+        }
+
+        .cam-btn {
+            background: #111; 
+            border: 1px solid var(--ui-blue); 
+            color: var(--ui-blue);
+            font-size: 12px; 
+            padding: 12px; 
+            cursor: pointer; 
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .cam-btn.active { 
+            background: var(--ui-blue); 
+            color: black; 
+            font-weight: bold; 
+        }
+
+        /* THE CAMERA DOWN BUTTON */
+        .monitor-down-btn {
+            grid-column: span 2;
+            background: var(--warning-red);
+            border: none;
+            color: white;
+            padding: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            font-size: 16px;
+            box-shadow: 0 4px 0 #900;
+        }
+
+        .monitor-down-btn:active { 
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #900;
+        }
+
+        #ui-layer {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            pointer-events: none; z-index: 150; text-align: center;
+            background: rgba(0, 0, 0, 0.7); padding: 15px 40px; border-radius: 8px;
+            border: 1px solid rgba(0, 242, 255, 0.3);
+        }
+
+        .screen {
+            position: absolute; width: 100%; height: 100%; background: black;
+            z-index: 2000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; padding: 20px;
+        }
+
+        .respawn-btn {
+            margin-top: 10px; padding: 15px 40px; font-size: 20px;
+            background: white; color: black; border: none; cursor: pointer;
+            border-radius: 4px; font-weight: bold; min-width: 250px;
+            transition: transform 0.1s;
+        }
+        
+        .respawn-btn:active { transform: scale(0.95); }
+        .respawn-btn.secondary { background: transparent; color: white; border: 2px solid white; }
+
+        #cam-label {
+            position: absolute; top: 20px; left: 20px; font-size: 24px;
+            color: var(--ui-blue); z-index: 10; text-shadow: 2px 2px 10px black;
+            background: rgba(0,0,0,0.6); padding: 8px 20px; border-left: 4px solid var(--ui-blue);
+        }
+
+        #animatronic-visual {
+            position: relative; z-index: 6; display: flex; gap: 50px;
+            justify-content: center; align-items: flex-end; padding: 20px; flex-wrap: wrap;
+        }
+
+        .cam-anim-icon { font-size: 150px; text-shadow: 0 0 40px rgba(255,255,255,0.3); }
+
+        .jumpscare {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 4000; background: black; display: none;
+            justify-content: center; align-items: center; font-size: 300px;
+            animation: shake 0.05s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(15px, 15px) scale(1.2); }
+            50% { transform: translate(-15px, -15px) scale(1.1); }
+            100% { transform: translate(15px, -15px) scale(1.2); }
+        }
+
+        .office-monitor-prop {
+            width: 300px; height: auto; margin-bottom: -10px;
+            filter: drop-shadow(0 0 15px rgba(0,0,0,0.8)); pointer-events: none;
+        }
+
+        #warning-msg {
+            color: var(--warning-red); font-size: 12px; margin-top: 5px;
+            display: none; animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- Menu and Screen Layers -->
+    <div id="init-screen" class="screen">
+        <h1 style="font-size: 60px; letter-spacing: 10px;">9 DaYs aT BoBs</h1>
+        <h2 style="color: var(--ui-blue); opacity: 0.7; animation: pulse 2s infinite;">[ CLICK TO START ]</h2>
+    </div>
+
+    <div id="start-screen" class="screen" style="display: none;">
+        <h1 style="font-size: 56px; color: var(--ui-blue); margin: 0; letter-spacing: 4px;">9 DaYs aT BoBs</h1>
+        <p id="night-display" style="font-size: 32px; margin: 20px 0; font-weight: bold;">NIGHT 1</p>
+        <button class="respawn-btn" id="continue-btn">BEGIN SHIFT</button>
+    </div>
+
+    <div id="ui-layer" style="display: none;">
+        <div style="display: flex; gap: 30px; font-size: 16px; font-weight: bold; color: var(--ui-blue);">
+            <span>POWER: <span id="power-val">100</span>%</span>
+            <span>TIME: <span id="clock-val">12</span> AM</span>
+            <span id="ui-night-val">Night 1</span>
+        </div>
+    </div>
+
+    <!-- Main Office -->
+    <div id="office" style="display: none;">
+        <div class="hallway-section">
+            <div id="left-window" class="window"></div>
+            <div id="left-hall" class="hallway">
+                <div id="left-door-anim" class="animatronic-at-door"></div>
+                <div id="left-door" class="door-container"></div>
+            </div>
+            <div class="controls">
+                <button id="btn-door-l" class="btn">CLOSE DOOR</button>
+                <button id="btn-light-l" class="btn">CHECK LIGHT</button>
+            </div>
+        </div>
+        
+        <div id="central-office" style="flex-grow: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <img src="uploaded:Screenshot 2026-04-10 10.04.59 PM.png" alt="Monitor Prop" class="office-monitor-prop">
+            <button class="btn" id="monitor-toggle-btn" style="width: 280px; height: 60px; border-color: var(--ui-blue); color: var(--ui-blue); font-size: 18px;">OPEN MONITOR</button>
+        </div>
+
+        <div class="hallway-section">
+            <div id="right-window" class="window"></div>
+            <div id="right-hall" class="hallway">
+                <div id="right-door-anim" class="animatronic-at-door"></div>
+                <div id="right-door" class="door-container"></div>
+            </div>
+            <div class="controls">
+                <button id="btn-door-r" class="btn">CLOSE DOOR</button>
+                <button id="btn-light-r" class="btn">CHECK LIGHT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitor Interface -->
+    <div id="monitor-overlay">
+        <div id="camera-view">
+            <div id="static"></div>
+            <div id="cam-label">CAM 01</div>
+            <div id="animatronic-visual"></div>
+            
+            <!-- CAMERA MAP AND CONTROL AREA -->
+            <div id="map-container" class="camera-map-container">
+                <div class="camera-grid" id="camera-buttons"></div>
+                <button class="monitor-down-btn" id="monitor-close-btn">CLOSE MONITOR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="jumpscare" class="jumpscare">🤡</div>
+
+    <div id="death-screen" class="screen" style="display: none;">
+        <h1 style="font-size: 64px; color: var(--warning-red);">GAME OVER</h1>
+        <button class="respawn-btn" id="retry-btn">RETRY NIGHT</button>
+    </div>
+
+    <div id="win-screen" class="screen" style="display: none;">
+        <h1 style="color: var(--ui-blue); font-size: 80px; margin: 0;">06:00</h1>
+        <p style="font-size: 24px;">SHIFT COMPLETE</p>
+        <button class="respawn-btn" id="win-btn">NEXT NIGHT</button>
+    </div>
+
+    <audio id="menu-music" loop>
+        <source src="uploaded:Screen recording 2026-04-10 3.26.10 PM.webm" type="video/webm">
+    </audio>
+</div>
+
+<script type="module">
+    // Simplified Logic for Demo/Artifact purposes
+    const ROOM_NAMES = ["Stage", "Dining", "Back", "Hall L", "Hall R", "Kitchen", "Storage", "Boiler", "Secret"];
+    const ANIMS = ["🤡", "🤖", "👻", "🦾", "👁️", "🦍", "🦊"];
+
+    class Game {
+        constructor() {
+            this.currentNight = 1;
+            this.power = 100;
+            this.time = 0;
+            this.isMonitorOpen = false;
+            this.currentCam = 0;
+            this.doors = { left: false, right: false };
+            this.lights = { left: false, right: false };
+            this.animPositions = ANIMS.map(() => 0);
+            this.isGameOver = false;
+
+            this.init();
+        }
+
+        init() {
+            this.setupListeners();
+            this.populateCams();
+            this.reset();
+        }
+
+        setupListeners() {
+            document.getElementById('init-screen').onclick = () => {
+                document.getElementById('init-screen').style.display = 'none';
+                document.getElementById('start-screen').style.display = 'flex';
+                document.getElementById('menu-music').play().catch(e => console.log("Audio blocked"));
+            };
+
+            document.getElementById('continue-btn').onclick = () => this.start();
+            document.getElementById('monitor-toggle-btn').onclick = () => this.toggleMonitor();
+            document.getElementById('monitor-close-btn').onclick = () => this.toggleMonitor();
+            
+            document.getElementById('btn-door-l').onclick = () => this.toggleDoor('left');
+            document.getElementById('btn-door-r').onclick = () => this.toggleDoor('right');
+            document.getElementById('btn-light-l').onmousedown = () => this.toggleLight('left', true);
+            document.getElementById('btn-light-l').onmouseup = () => this.toggleLight('left', false);
+            document.getElementById('btn-light-r').onmousedown = () => this.toggleLight('right', true);
+            document.getElementById('btn-light-r').onmouseup = () => this.toggleLight('right', false);
+
+            document.getElementById('retry-btn').onclick = () => this.reset();
+            document.getElementById('win-btn').onclick = () => {
+                this.currentNight++;
+                this.reset();
+            };
+        }
+
+        populateCams() {
+            const grid = document.getElementById('camera-buttons');
+            ROOM_NAMES.forEach((name, i) => {
+                const btn = document.createElement('button');
+                btn.className = `cam-btn ${i === 0 ? 'active' : ''}`;
+                btn.innerText = `CAM ${i + 1}`;
+                btn.onclick = () => this.switchCam(i);
+                grid.appendChild(btn);
+            });
+        }
+
+        reset() {
+            this.power = 100;
+            this.time = 0;
+            this.isGameOver = false;
+            this.isMonitorOpen = false;
+            this.doors = { left: false, right: false };
+            this.animPositions = ANIMS.map(() => 0);
+            
+            document.getElementById('death-screen').style.display = 'none';
+            document.getElementById('win-screen').style.display = 'none';
+            document.getElementById('office').style.display = 'none';
+            document.getElementById('monitor-overlay').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+            document.getElementById('night-display').innerText = `NIGHT ${this.currentNight}`;
+            document.getElementById('ui-night-val').innerText = `Night ${this.currentNight}`;
+            
+            clearInterval(this.loop);
+            this.updateUI();
+        }
+
+        start() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('office').style.display = 'flex';
+            document.getElementById('ui-layer').style.display = 'block';
+            this.loop = setInterval(() => this.tick(), 1000);
+        }
+
+        tick() {
+            if (this.isGameOver) return;
+            
+            // Basic power drain
+            let drain = 0.1;
+            if (this.doors.left) drain += 0.3;
+            if (this.doors.right) drain += 0.3;
+            if (this.isMonitorOpen) drain += 0.2;
+            this.power -= drain;
+
+            if (this.power <= 0) this.jumpscare("🌑");
+
+            // Time progression
+            if (Math.random() < 0.05) {
+                this.time++;
+                if (this.time >= 6) this.win();
+            }
+
+            // Anim movement
+            this.animPositions = this.animPositions.map(pos => {
+                if (Math.random() < 0.1) return Math.floor(Math.random() * ROOM_NAMES.length);
+                return pos;
+            });
+
+            this.updateUI();
+        }
+
+        toggleDoor(side) {
+            this.doors[side] = !this.doors[side];
+            document.getElementById(`${side}-door`).classList.toggle('closed', this.doors[side]);
+            document.getElementById(`btn-door-${side[0]}`).classList.toggle('active', this.doors[side]);
+        }
+
+        toggleLight(side, on) {
+            document.getElementById(`${side}-hall`).classList.toggle('light-on', on);
+        }
+
+        toggleMonitor() {
+            this.isMonitorOpen = !this.isMonitorOpen;
+            document.getElementById('monitor-overlay').style.display = this.isMonitorOpen ? 'flex' : 'none';
+            if (this.isMonitorOpen) this.renderCam();
+        }
+
+        switchCam(idx) {
+            this.currentCam = idx;
+            document.querySelectorAll('.cam-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+            this.renderCam();
+        }
+
+        renderCam() {
+            document.getElementById('cam-label').innerText = `CAM 0${this.currentCam + 1}: ${ROOM_NAMES[this.currentCam]}`;
+            const display = document.getElementById('animatronic-visual');
+            display.innerHTML = '';
+            this.animPositions.forEach((pos, i) => {
+                if (pos === this.currentCam) {
+                    const span = document.createElement('span');
+                    span.className = 'cam-anim-icon';
+                    span.innerText = ANIMS[i];
+                    display.appendChild(span);
+                }
+            });
+        }
+
+        updateUI() {
+            document.getElementById('power-val').innerText = Math.floor(this.power);
+            document.getElementById('clock-val').innerText = this.time === 0 ? 12 : this.time;
+        }
+
+        jumpscare(icon) {
+            this.isGameOver = true;
+            clearInterval(this.loop);
+            const js = document.getElementById('jumpscare');
+            js.innerText = icon;
+            js.style.display = 'flex';
+            setTimeout(() => {
+                js.style.display = 'none';
+                document.getElementById('death-screen').style.display = 'flex';
+            }, 1000);
+        }
+
+        win() {
+            this.isGameOver = true;
+            clearInterval(this.loop);
+            document.getElementById('win-screen').style.display = 'flex';
+        }
+    }
+
+    new Game();
+</script>
+</body>
+</html>
