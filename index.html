@@ -277,11 +277,6 @@
             100% { transform: translate(15px, -15px) scale(1.2); }
         }
 
-        .office-monitor-prop {
-            width: 300px; height: auto; margin-bottom: -10px;
-            filter: drop-shadow(0 0 15px rgba(0,0,0,0.8)); pointer-events: none;
-        }
-
         #goldie-office {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             font-size: 180px; z-index: 1000; display: none; filter: drop-shadow(0 0 30px var(--gold));
@@ -314,19 +309,17 @@
 
         .anim-lineup-icon { font-size: 50px; opacity: 0.9; }
 
-        #saving-indicator { position: absolute; bottom: 20px; left: 20px; font-size: 12px; opacity: 0.5; z-index: 3000; }
+        .jerry-warning { color: var(--warning-red) !important; animation: pulse 0.5s infinite; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <!-- Click to Start Screen -->
     <div id="init-screen" class="screen">
         <h1 style="font-size: 60px; letter-spacing: 10px;">9 DaYs aT BoBs</h1>
         <h2 style="color: var(--ui-blue); opacity: 0.7; animation: pulse 2s infinite;">[ CLICK ANYWHERE TO START ]</h2>
     </div>
 
-    <!-- Main Menu Screen -->
     <div id="start-screen" class="screen" style="display: none; cursor: default;">
         <div class="animatronic-lineup" id="lineup"></div>
         <h1 style="font-size: 56px; color: var(--ui-blue); margin: 0; letter-spacing: 4px;">9 DaYs aT BoBs</h1>
@@ -337,7 +330,7 @@
 
     <div id="ui-layer" style="display: none;">
         <div style="display: flex; gap: 30px; font-size: 16px; font-weight: bold; color: var(--ui-blue);">
-            <span>JERRY: <span id="jerry-ui-val">20</span>s</span>
+            <span id="jerry-ui-container">JERRY: <span id="jerry-ui-val">20</span>s</span>
             <span>POWER: <span id="power-val">100</span>%</span>
             <span>TIME: <span id="clock-val">12</span> AM</span>
             <span id="ui-night-val">Night 1</span>
@@ -346,7 +339,7 @@
 
     <div id="office" style="display: none;">
         <div id="goldie-office">🟡</div>
-        <div id="goldie-timer">10.00</div>
+        <div id="goldie-timer">10</div>
         
         <div class="hallway-section">
             <div id="left-window" class="window"></div>
@@ -361,8 +354,7 @@
         </div>
         
         <div id="central-office" style="flex-grow: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <img src="Screenshot 2026-04-10 4.18.19 PM.png" alt="Monitor" class="office-monitor-prop">
-            <button class="btn" id="monitor-toggle-btn" style="width: 280px; height: 60px; border-color: var(--ui-blue); color: var(--ui-blue); font-size: 18px;">OPEN MONITOR</button>
+             <button class="btn" id="monitor-toggle-btn" style="width: 280px; height: 60px; border-color: var(--ui-blue); color: var(--ui-blue); font-size: 18px;">OPEN MONITOR</button>
         </div>
 
         <div class="hallway-section">
@@ -396,7 +388,6 @@
     <div id="death-screen" class="screen" style="display: none;">
         <h1 style="font-size: 64px; color: var(--warning-red);">GAME OVER</h1>
         <button class="respawn-btn" id="retry-btn">RETRY NIGHT</button>
-        <button class="respawn-btn secondary" id="restart-btn">RESTART TOTAL</button>
     </div>
 
     <div id="win-screen" class="screen" style="display: none;">
@@ -410,20 +401,6 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    const firebaseConfig = { apiKey: "MOCK", projectId: "MOCK" };
-    let db, auth, userId, useFirebase = false;
-
-    if (firebaseConfig.apiKey !== "MOCK") {
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        useFirebase = true;
-    }
-
     const ANIMS_DATA = [
         { name: "Bob", icon: "🤡", pos: 0, path: [0, 1, 3, "OFFICE_L"] },
         { name: "Silly", icon: "🤖", pos: 0, path: [0, 1, 4, "OFFICE_R"] },
@@ -434,7 +411,7 @@
         { name: "Goldie", icon: "🟡", pos: 0, path: ["SPECIAL"], special: "goldie" }
     ];
 
-    const ROOM_NAMES = ["Stage", "Dining", "Back", "L-Hall", "R-Hall", "Kitchen", "Closet", "Boiler", "Jerry"];
+    const ROOM_NAMES = ["Stage", "Dining", "Back", "L-Hall", "R-Hall", "Kitchen", "Closet", "Boiler", "Jerry's Den"];
 
     class Game {
         constructor() {
@@ -455,14 +432,10 @@
         }
 
         async init() {
-            if (useFirebase) {
-                signInAnonymously(auth).catch(() => {});
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) { userId = user.uid; await this.loadProgress(); }
-                });
-            } else {
-                await this.loadProgress();
-            }
+            const saved = localStorage.getItem('bobs_save');
+            if (saved) this.currentNight = parseInt(saved);
+            document.getElementById('night-display').innerText = `NIGHT ${this.currentNight}`;
+            document.getElementById('ui-night-val').innerText = `Night ${this.currentNight}`;
 
             this.setupListeners();
             this.populateLineup();
@@ -496,22 +469,12 @@
             document.getElementById('monitor-close-btn').onclick = () => this.toggleMonitor();
 
             document.getElementById('retry-btn').onclick = () => location.reload();
-            document.getElementById('restart-btn').onclick = () => { localStorage.clear(); location.reload(); };
             document.getElementById('win-btn').onclick = () => {
                 this.currentNight++;
-                this.saveProgress();
+                localStorage.setItem('bobs_save', this.currentNight);
                 location.reload();
             };
         }
-
-        async loadProgress() {
-            const saved = localStorage.getItem('bobs_save');
-            if (saved) this.currentNight = parseInt(saved);
-            document.getElementById('night-display').innerText = `NIGHT ${this.currentNight}`;
-            document.getElementById('ui-night-val').innerText = `Night ${this.currentNight}`;
-        }
-
-        saveProgress() { localStorage.setItem('bobs_save', this.currentNight); }
 
         populateLineup() {
             document.getElementById('lineup').innerHTML = ANIMS_DATA.map(a => `
@@ -527,7 +490,7 @@
             ROOM_NAMES.forEach((name, i) => {
                 const btn = document.createElement('button');
                 btn.className = `cam-btn ${i === 0 ? 'active' : ''}`;
-                btn.innerText = `CAM ${i + 1}: ${name.toUpperCase()}`;
+                btn.innerText = `CAM ${i + 1}`;
                 btn.onclick = () => this.switchCam(i);
                 container.appendChild(btn);
             });
@@ -537,33 +500,47 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('office').style.display = 'flex';
             document.getElementById('ui-layer').style.display = 'block';
-            const music = document.getElementById('menu-music');
-            if (music) music.pause();
-
-            this.tickRate = Math.max(800, 4500 - (this.currentNight * 400));
+            
+            this.tickRate = Math.max(1200, 4000 - (this.currentNight * 300));
             this.gameLoop = setInterval(() => this.tick(), this.tickRate);
-            this.powerLoop = setInterval(() => this.drainPower(), 1000); 
+            
+            // Per-second updates (Jerry, Power, Goldie)
+            this.secLoop = setInterval(() => this.secondTick(), 1000); 
+            
             this.clockLoop = setInterval(() => {
                 this.time++;
                 if (this.time >= 6) this.win();
                 this.updateUI();
-            }, 30000); 
+            }, 45000); 
         }
 
-        drainPower() {
+        secondTick() {
             if (this.isGameOver) return;
-            let usage = 0.1;
-            if (this.doors.left) usage += 0.5;
-            if (this.doors.right) usage += 0.5;
-            if (this.isMonitorOpen) usage += 0.4;
+            
+            // Power Drain
+            let usage = 0.15;
+            if (this.doors.left) usage += 0.4;
+            if (this.doors.right) usage += 0.4;
+            if (this.isMonitorOpen) usage += 0.3;
             this.power -= usage;
             if (this.power <= 0) this.jumpscare("🌑");
-            
+
+            // Jerry Logic (Must watch Cam 8)
+            if (!this.isMonitorOpen || this.currentCam !== 8) {
+                this.jerryTimer--;
+                if (this.jerryTimer <= 0) this.jumpscare("🦊");
+            } else {
+                // Watching him resets him
+                this.jerryTimer = 20;
+            }
+
+            // Goldie Logic
             if (this.goldieActive) {
-                this.goldieTimer -= 1;
-                document.getElementById('goldie-timer').innerText = (this.goldieTimer).toFixed(2);
+                this.goldieTimer--;
+                document.getElementById('goldie-timer').innerText = this.goldieTimer;
                 if (this.goldieTimer <= 0) this.jumpscare("🟡");
             }
+
             this.updateUI();
         }
 
@@ -571,16 +548,11 @@
             if (this.isGameOver) return;
             this.animatronics.forEach(anim => {
                 if (anim.special === "goldie") {
-                    if (Math.random() > 0.95 && !this.goldieActive) this.spawnGoldie();
-                } else if (anim.teleportOnly) {
-                    if (!this.isMonitorOpen || this.currentCam !== 8) {
-                        this.jerryTimer--;
-                        if (this.jerryTimer <= 0) this.jumpscare("🦊");
-                    } else {
-                        this.jerryTimer = 20;
+                    if (Math.random() > 0.94 && !this.goldieActive && !this.isMonitorOpen) this.spawnGoldie();
+                } else if (!anim.teleportOnly) {
+                    if (Math.random() > (0.65 - (this.currentNight * 0.05))) {
+                        this.moveAnim(anim);
                     }
-                } else if (Math.random() > (0.7 - (this.currentNight * 0.05))) {
-                    this.moveAnim(anim);
                 }
             });
             this.updateVisuals();
@@ -602,8 +574,8 @@
                     if (this.isGameOver) return;
                     if (anim.pos === "OFFICE_L" && !this.doors.left) this.jumpscare(anim.icon);
                     else if (anim.pos === "OFFICE_R" && !this.doors.right) this.jumpscare(anim.icon);
-                    else anim.pos = 0;
-                }, 4000 - (this.currentNight * 200));
+                    else anim.pos = 0; // Return to start if blocked
+                }, 3000 - (this.currentNight * 200));
             } else if (next !== undefined) {
                 anim.pos = next;
             } else {
@@ -627,6 +599,7 @@
             document.getElementById('monitor-overlay').style.display = this.isMonitorOpen ? 'flex' : 'none';
             if (this.isMonitorOpen) {
                 this.renderCam();
+                // Opening monitor scares off Goldie
                 if (this.goldieActive) {
                     this.goldieActive = false;
                     document.getElementById('goldie-office').style.display = 'none';
@@ -656,16 +629,25 @@
         }
 
         updateUI() {
-            document.getElementById('power-val').innerText = Math.floor(this.power);
+            document.getElementById('power-val').innerText = Math.max(0, Math.floor(this.power));
             document.getElementById('clock-val').innerText = this.time === 0 ? 12 : this.time;
-            document.getElementById('jerry-ui-val').innerText = Math.max(0, this.jerryTimer);
+            
+            const jerryVal = document.getElementById('jerry-ui-val');
+            jerryVal.innerText = Math.max(0, this.jerryTimer);
+            
+            const jerryContainer = document.getElementById('jerry-ui-container');
+            if (this.jerryTimer < 8) {
+                jerryContainer.classList.add('jerry-warning');
+            } else {
+                jerryContainer.classList.remove('jerry-warning');
+            }
         }
 
         jumpscare(icon) {
             if (this.isGameOver) return;
             this.isGameOver = true;
             clearInterval(this.gameLoop);
-            clearInterval(this.powerLoop);
+            clearInterval(this.secLoop);
             clearInterval(this.clockLoop);
             const js = document.getElementById('jumpscare');
             js.innerText = icon;
@@ -673,23 +655,19 @@
             setTimeout(() => {
                 js.style.display = 'none';
                 document.getElementById('death-screen').style.display = 'flex';
-                document.getElementById('office').style.display = 'none';
-                document.getElementById('ui-layer').style.display = 'none';
-            }, 2000);
+            }, 1500);
         }
 
         win() {
             this.isGameOver = true;
             clearInterval(this.gameLoop);
-            clearInterval(this.powerLoop);
+            clearInterval(this.secLoop);
             clearInterval(this.clockLoop);
             document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('office').style.display = 'none';
-            document.getElementById('ui-layer').style.display = 'none';
         }
     }
 
-    new Game();
+    window.onload = () => new Game();
 </script>
 </body>
 </html>
